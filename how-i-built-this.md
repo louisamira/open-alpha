@@ -197,4 +197,44 @@ Everything runs on ATXP services with zero infrastructure cost.
 
 ---
 
+## Session 2: Making It Actually Work
+
+The original plan was ATXP everything. Reality had other ideas.
+
+### Database Pivot: ATXP → SQLite
+
+ATXP's Database MCP returned an error: "Legacy Postgres plans, including 'starter', are no longer supported for new databases." Rather than block on this, we pivoted to SQLite with `better-sqlite3`.
+
+**Changes made:**
+- Rewrote `atxp-db.ts` to use SQLite instead of MCP calls
+- Replaced PostgreSQL's `NOW()` with SQLite's `datetime('now')` across all routes
+- Updated setup script to verify SQLite tables instead of `information_schema`
+- Database file lives at `backend/data/open-alpha.db`
+
+SQLite is actually better for local dev anyway - no external dependencies, instant setup, easy to reset.
+
+### LLM Gateway: Finding the Right Endpoint
+
+The original code pointed at `https://llm.atxp.ai/v1` but used the wrong auth format. After consulting the actual ATXP docs, turns out it's an OpenAI-compatible API - just pass the connection string as the bearer token.
+
+The tutor chat and parent coach both work now. Response times are good.
+
+### Quiz Generation Bug
+
+The LLM returns JSON wrapped in markdown code blocks (` ```json...``` `). Added extraction logic to strip those before parsing. Quiz generation now works reliably.
+
+### Quiz Scoring Bug
+
+Found a scoring bug where the last correct answer was counted twice, giving scores like 120% (6/5 correct). The issue was in `handleAnswer` incrementing `correctCount`, then `handleNext` adding 1 again for the last question. Fixed by removing the double-count.
+
+### Current Status
+
+Everything in Phases 1-3 of the roadmap is now complete and tested:
+- Student signup → subject selection → AI tutor chat → quiz → mastery tracking
+- Parent signup → invite code linking → progress viewing → AI coach chat
+
+The app runs locally with `npm run dev`. SQLite for data, ATXP LLM Gateway for AI.
+
+---
+
 *Built with Claude Code, January 2026*
