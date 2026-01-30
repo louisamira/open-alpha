@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import Chat from '../components/Chat';
 import Quiz from '../components/Quiz';
+import Spinner from '../components/Spinner';
 
 interface Concept {
   id: string;
@@ -22,6 +23,7 @@ export default function Learn() {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     async function fetchConcepts() {
@@ -102,11 +104,7 @@ export default function Learn() {
   };
 
   if (loading) {
-    return (
-      <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
-        Loading...
-      </div>
-    );
+    return <Spinner size="large" text="Loading concepts..." />;
   }
 
   return (
@@ -134,8 +132,16 @@ export default function Learn() {
 
       {/* Main Content */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Mobile sidebar overlay */}
+        <div
+          className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+
         {/* Sidebar - Concept List */}
         <aside
+          className={`learn-sidebar ${sidebarOpen ? 'open' : ''}`}
           style={{
             width: '280px',
             borderRight: '1px solid var(--border)',
@@ -155,6 +161,7 @@ export default function Learn() {
                     onClick={() => {
                       setSelectedConcept(concept);
                       setShowQuiz(false);
+                      setSidebarOpen(false);
                       navigate(`/learn/${subject}/${concept.id}`);
                     }}
                     style={{
@@ -249,6 +256,15 @@ export default function Learn() {
           )}
         </main>
       </div>
+
+      {/* Mobile sidebar toggle button */}
+      <button
+        className="sidebar-toggle"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? 'Close concept list' : 'Open concept list'}
+      >
+        {sidebarOpen ? '\u2715' : '\u2630'}
+      </button>
     </div>
   );
 }

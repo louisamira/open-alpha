@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import ErrorBoundary from './components/ErrorBoundary';
+import Spinner from './components/Spinner';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
@@ -81,7 +83,7 @@ function ProtectedRoute({ children, role }: { children: ReactNode; role?: 'stude
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+    return <Spinner size="large" text="Loading..." />;
   }
 
   if (!user) {
@@ -97,9 +99,10 @@ function ProtectedRoute({ children, role }: { children: ReactNode; role?: 'stude
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route
@@ -142,9 +145,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

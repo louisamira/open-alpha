@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
+import Spinner from '../components/Spinner';
 
 interface Child {
   id: number;
@@ -19,12 +20,43 @@ interface SubjectSummary {
   percentComplete: number;
 }
 
+interface Activity {
+  session_type: string;
+  subject: string | null;
+  concept_id: string | null;
+  updated_at: string;
+}
+
+interface Struggling {
+  subject: string;
+  concept_id: string;
+  conceptName: string;
+  subjectName: string;
+  mastery_score: number;
+  attempts: number;
+}
+
+interface Recommendation {
+  type: 'continue' | 'review' | 'start';
+  subject: string;
+  conceptId: string;
+  conceptName: string;
+  reason: string;
+}
+
+interface Analytics {
+  lastActive: string | null;
+  recentActivity: Activity[];
+  struggling: Struggling[];
+  recommendations: Recommendation[];
+}
+
 export default function ParentDashboard() {
   const { user, logout, token } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [childProgress, setChildProgress] = useState<SubjectSummary[]>([]);
-  const [inviteCode, setInviteCode] = useState('');
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [linkCode, setLinkCode] = useState('');
   const [linkError, setLinkError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -36,6 +68,7 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (selectedChild) {
       fetchChildProgress(selectedChild.id);
+      fetchChildAnalytics(selectedChild.id);
     }
   }, [selectedChild, token]);
 
@@ -72,6 +105,37 @@ export default function ParentDashboard() {
     } catch (error) {
       console.error('Failed to fetch child progress:', error);
     }
+  }
+
+  async function fetchChildAnalytics(childId: number) {
+    try {
+      const res = await fetch(`/api/parent/children/${childId}/analytics`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAnalytics(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch child analytics:', error);
+    }
+  }
+
+  function formatRelativeTime(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
   }
 
   async function handleLinkChild() {
@@ -122,11 +186,7 @@ export default function ParentDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
-        Loading...
-      </div>
-    );
+    return <Spinner size="large" text="Loading dashboard..." />;
   }
 
   return (
@@ -218,48 +278,171 @@ export default function ParentDashboard() {
             </div>
           </div>
 
-          {/* Child Progress */}
+          {/* Child Progress & Analytics */}
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
-              {selectedChild
-                ? `${selectedChild.display_name || selectedChild.email}'s Progress`
-                : 'Select a Child'}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                {selectedChild
+                  ? `${selectedChild.display_name || selectedChild.email}'s Progress`
+                  : 'Select a Child'}
+              </h3>
+              {analytics?.lastActive && (
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                  Last active: {formatRelativeTime(analytics.lastActive)}
+                </span>
+              )}
+            </div>
 
             {selectedChild ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {childProgress.map((subject) => (
-                  <div key={subject.subjectId} className="card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.5rem' }}>{subjectEmojis[subject.subjectId]}</span>
-                      <h4 style={{ fontSize: '1.125rem', fontWeight: 600 }}>{subject.subjectName}</h4>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Progress</span>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{subject.percentComplete}%</span>
-                      </div>
-                      <div style={{ height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Struggling Alerts */}
+                {analytics?.struggling && analytics.struggling.length > 0 && (
+                  <div className="card" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid var(--error)' }}>
+                    <h4 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--error)' }}>
+                      Needs Extra Help
+                    </h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {analytics.struggling.map((item, index) => (
+                        <li
+                          key={index}
                           style={{
-                            height: '100%',
-                            width: `${subject.percentComplete}%`,
-                            background: 'var(--secondary)',
-                            borderRadius: '4px',
+                            padding: '0.5rem 0',
+                            borderBottom: index < analytics.struggling.length - 1 ? '1px solid var(--border)' : 'none',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                           }}
-                        />
-                      </div>
-                    </div>
-
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
-                      {subject.completed} of {subject.totalConcepts} concepts mastered
-                    </p>
+                        >
+                          <div>
+                            <span style={{ fontWeight: 500 }}>{item.conceptName}</span>
+                            <span style={{ color: 'var(--text-light)', fontSize: '0.875rem', marginLeft: '0.5rem' }}>
+                              ({item.subjectName})
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--error)' }}>
+                            {item.attempts} attempts, {item.mastery_score}%
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
+                )}
 
-                {childProgress.every((s) => s.completed === 0) && (
+                {/* Recommendations */}
+                {analytics?.recommendations && analytics.recommendations.length > 0 && (
+                  <div className="card" style={{ background: 'rgba(34, 197, 94, 0.05)', border: '1px solid var(--success)' }}>
+                    <h4 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--success)' }}>
+                      Recommended Next Steps
+                    </h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {analytics.recommendations.map((rec, index) => (
+                        <li
+                          key={index}
+                          style={{
+                            padding: '0.5rem 0',
+                            borderBottom: index < analytics.recommendations.length - 1 ? '1px solid var(--border)' : 'none',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: rec.type === 'continue' ? 'var(--primary)' : rec.type === 'start' ? 'var(--secondary)' : 'var(--text-light)',
+                              color: 'white',
+                            }}>
+                              {rec.type === 'continue' ? 'Continue' : rec.type === 'start' ? 'Start' : 'Review'}
+                            </span>
+                            <span style={{ fontWeight: 500 }}>{rec.conceptName}</span>
+                          </div>
+                          <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+                            {rec.reason}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Subject Progress */}
+                <div>
+                  <h4 style={{ fontWeight: 600, marginBottom: '0.75rem' }}>Subject Progress</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {childProgress.map((subject) => (
+                      <div key={subject.subjectId} className="card">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                          <span style={{ fontSize: '1.5rem' }}>{subjectEmojis[subject.subjectId]}</span>
+                          <h4 style={{ fontSize: '1.125rem', fontWeight: 600 }}>{subject.subjectName}</h4>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div style={{ marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Progress</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{subject.percentComplete}%</span>
+                          </div>
+                          <div style={{ height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                height: '100%',
+                                width: `${subject.percentComplete}%`,
+                                background: 'var(--secondary)',
+                                borderRadius: '4px',
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                          {subject.completed} of {subject.totalConcepts} concepts mastered
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                {analytics?.recentActivity && analytics.recentActivity.length > 0 && (
+                  <div>
+                    <h4 style={{ fontWeight: 600, marginBottom: '0.75rem' }}>Recent Activity</h4>
+                    <div className="card">
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {analytics.recentActivity.map((activity, index) => (
+                          <li
+                            key={index}
+                            style={{
+                              padding: '0.5rem 0',
+                              borderBottom: index < analytics.recentActivity.length - 1 ? '1px solid var(--border)' : 'none',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {activity.subject && (
+                                <span style={{ fontSize: '1.25rem' }}>{subjectEmojis[activity.subject]}</span>
+                              )}
+                              <span style={{ fontWeight: 500 }}>
+                                {activity.session_type === 'tutor' ? 'Learning session' : 'Coach chat'}
+                              </span>
+                              {activity.concept_id && (
+                                <span style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>
+                                  - {activity.concept_id.replace(/^\w+-/, '').replace(/-/g, ' ')}
+                                </span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                              {formatRelativeTime(activity.updated_at)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {childProgress.every((s) => s.completed === 0) && !analytics?.recentActivity?.length && (
                   <p style={{ color: 'var(--text-light)', textAlign: 'center', padding: '2rem' }}>
                     Your child hasn't started learning yet. Encourage them to pick a subject!
                   </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
+import Spinner from '../components/Spinner';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,7 +15,7 @@ interface Child {
 }
 
 export default function ParentCoach() {
-  const { user, logout, token } = useAuth();
+  const { logout, token } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -123,11 +124,7 @@ export default function ParentCoach() {
   ];
 
   if (initialLoading) {
-    return (
-      <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
-        Loading...
-      </div>
-    );
+    return <Spinner size="large" text="Loading..." />;
   }
 
   return (
@@ -242,8 +239,14 @@ export default function ParentCoach() {
                             background: 'var(--surface)',
                             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                           }}
+                          role="status"
+                          aria-label="Coach is thinking"
                         >
-                          <p style={{ color: 'var(--text-light)' }}>Thinking...</p>
+                          <div className="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                          </div>
                         </div>
                       </div>
                     )}

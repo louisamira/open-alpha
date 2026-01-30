@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
+import Spinner from './Spinner';
 
 interface Question {
   question: string;
@@ -109,11 +110,8 @@ export default function Quiz({ subject, conceptId, conceptName, onComplete, onCa
 
   if (loading) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Generating quiz...</p>
-          <p style={{ color: 'var(--text-light)' }}>This may take a moment</p>
-        </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner size="large" text="Generating quiz..." />
       </div>
     );
   }

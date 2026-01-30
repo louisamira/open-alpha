@@ -137,8 +137,6 @@ interface SubjectCardProps {
 }
 
 export function SubjectCard({ name, emoji, completed, total, onClick }: SubjectCardProps) {
-  const percentage = Math.round((completed / total) * 100);
-
   return (
     <div
       className="card"

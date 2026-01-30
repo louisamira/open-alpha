@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
+import Spinner from '../components/Spinner';
 
 interface SubjectSummary {
   subjectId: string;
@@ -80,11 +81,7 @@ export default function StudentDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
-        Loading...
-      </div>
-    );
+    return <Spinner size="large" text="Loading your progress..." />;
   }
 
   return (

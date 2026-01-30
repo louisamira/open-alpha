@@ -135,8 +135,14 @@ export default function Chat({ subject, conceptId }: ChatProps) {
                     background: 'var(--surface)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                   }}
+                  role="status"
+                  aria-label="Tutor is thinking"
                 >
-                  <p style={{ color: 'var(--text-light)' }}>Thinking...</p>
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
               </div>
             )}
