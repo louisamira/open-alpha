@@ -76,7 +76,7 @@ export default function Quiz({ subject, conceptId, conceptName, onComplete, onCa
           conceptId,
           score,
           totalQuestions: questions.length,
-          correctAnswers: correctCount + (selectedAnswer === questions[currentIndex]?.correctAnswer ? 1 : 0),
+          correctAnswers: correctCount,
         }),
       });
     } catch (error) {
@@ -100,9 +100,8 @@ export default function Quiz({ subject, conceptId, conceptName, onComplete, onCa
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      // Quiz complete
-      const finalCorrect = correctCount + (selectedAnswer === questions[currentIndex].correctAnswer ? 1 : 0);
-      const score = Math.round((finalCorrect / questions.length) * 100);
+      // Quiz complete - correctCount already includes the last answer from handleAnswer
+      const score = Math.round((correctCount / questions.length) * 100);
       setFinished(true);
       submitResults(score);
     }
@@ -138,8 +137,7 @@ export default function Quiz({ subject, conceptId, conceptName, onComplete, onCa
   }
 
   if (finished) {
-    const finalCorrect = correctCount + (selectedAnswer === questions[currentIndex]?.correctAnswer ? 1 : 0);
-    const score = Math.round((finalCorrect / questions.length) * 100);
+    const score = Math.round((correctCount / questions.length) * 100);
     const passed = score >= 80;
 
     return (
@@ -171,7 +169,7 @@ export default function Quiz({ subject, conceptId, conceptName, onComplete, onCa
           </p>
 
           <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>
-            {finalCorrect} out of {questions.length} correct
+            {correctCount} out of {questions.length} correct
           </p>
 
           {passed ? (
