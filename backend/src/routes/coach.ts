@@ -171,7 +171,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Update session
     await executeSql(
-      `UPDATE sessions SET messages = $1, updated_at = NOW() WHERE id = $2`,
+      `UPDATE sessions SET messages = $1, updated_at = datetime('now') WHERE id = $2`,
       [JSON.stringify(messages), session.id]
     );
 

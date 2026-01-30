@@ -235,7 +235,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Update session
     await executeSql(
-      `UPDATE sessions SET messages = $1, updated_at = NOW() WHERE id = $2`,
+      `UPDATE sessions SET messages = $1, updated_at = datetime('now') WHERE id = $2`,
       [JSON.stringify(messages), session.id]
     );
 
@@ -330,7 +330,7 @@ router.post('/quiz/submit', async (req: Request, res: Response) => {
       const completed = newScore >= 80;
 
       await executeSql(
-        `UPDATE progress SET mastery_score = $1, attempts = attempts + 1, last_attempt_at = NOW()${completed ? ', completed_at = NOW()' : ''}
+        `UPDATE progress SET mastery_score = $1, attempts = attempts + 1, last_attempt_at = datetime('now')${completed ? ", completed_at = datetime('now')" : ''}
          WHERE student_id = $2 AND subject = $3 AND concept_id = $4`,
         [newScore, auth.userId, data.subject, data.conceptId]
       );
@@ -346,7 +346,7 @@ router.post('/quiz/submit', async (req: Request, res: Response) => {
 
       await executeSql(
         `INSERT INTO progress (student_id, subject, concept_id, mastery_score, attempts, last_attempt_at${completed ? ', completed_at' : ''})
-         VALUES ($1, $2, $3, $4, 1, NOW()${completed ? ', NOW()' : ''})`,
+         VALUES ($1, $2, $3, $4, 1, datetime('now')${completed ? ", datetime('now')" : ''})`,
         [auth.userId, data.subject, data.conceptId, data.score]
       );
 

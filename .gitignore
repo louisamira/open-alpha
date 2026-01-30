@@ -30,3 +30,6 @@ coverage/
 # Temp files
 *.tmp
 *.temp
+
+# SQLite database
+backend/data/

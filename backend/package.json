@@ -12,8 +12,10 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@atxp/client": "^0.10.5",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.6.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",

@@ -14,7 +14,7 @@ function getClient(): OpenAI {
 
   client = new OpenAI({
     baseURL: LLM_BASE_URL,
-    apiKey: connectionString,
+    apiKey: connectionString,  // ATXP connection string is used as bearer token
   });
 
   return client;
@@ -91,14 +91,23 @@ export async function chatWithTutor(
     ...messages,
   ];
 
-  const response = await openai.chat.completions.create({
-    model,
-    messages: fullMessages,
-    max_tokens: 1024,
-    temperature: 0.7,
-  });
+  try {
+    console.log('[LLM] Making request to:', LLM_BASE_URL);
+    console.log('[LLM] Model:', model);
 
-  return response.choices[0]?.message?.content || 'I apologize, but I had trouble generating a response. Please try again.';
+    const response = await openai.chat.completions.create({
+      model,
+      messages: fullMessages,
+      max_tokens: 1024,
+      temperature: 0.7,
+    });
+
+    console.log('[LLM] Response received');
+    return response.choices[0]?.message?.content || 'I apologize, but I had trouble generating a response. Please try again.';
+  } catch (error) {
+    console.error('[LLM] Error:', error);
+    throw error;
+  }
 }
 
 export async function chatWithCoach(

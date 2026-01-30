@@ -134,7 +134,7 @@ router.post('/link', async (req: Request, res: Response) => {
 
     // Complete the link
     await executeSql(
-      'UPDATE parent_links SET parent_id = $1, linked_at = NOW(), invite_code = NULL WHERE id = $2',
+      "UPDATE parent_links SET parent_id = $1, linked_at = datetime('now'), invite_code = NULL WHERE id = $2",
       [auth.userId, link.id]
     );
 
