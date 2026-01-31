@@ -84,6 +84,7 @@ Create an accessible, AI-powered learning platform that makes quality education 
 
 Items intentionally deferred from MVP:
 
+- **ATXP/Google OAuth authentication** - Sign in with Google, automatically create/link ATXP account for seamless onboarding
 - Multi-provider AI configuration UI
 - Native mobile applications
 - LMS integrations (Canvas, Schoology)

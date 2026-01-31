@@ -237,4 +237,95 @@ The app runs locally with `npm run dev`. SQLite for data, ATXP LLM Gateway for A
 
 ---
 
+---
+
+## Session 3: Deploying to Production
+
+Time to get this thing live. Local dev is great, but we need a real URL.
+
+### The Stack Decision: Vercel + Turso
+
+**Vercel** was the obvious choice for hosting:
+- Free tier is generous
+- Handles both the React frontend and API routes
+- GitHub integration means push-to-deploy
+
+**Turso** for the database:
+- SQLite-compatible (our local dev used SQLite, so minimal changes)
+- Edge-ready - low latency globally
+- Free tier works for MVP
+
+### Architecture Changes
+
+The app needed restructuring for Vercel's serverless model:
+
+**Before (Express.js):**
+```
+backend/src/routes/auth.ts → Express router
+```
+
+**After (Vercel API Routes):**
+```
+api/auth/login.ts → Serverless function
+api/auth/signup.ts → Serverless function
+```
+
+Each API endpoint became its own file exporting HTTP method handlers (`POST`, `GET`, etc.).
+
+### The Deployment Journey
+
+Not everything went smoothly:
+
+1. **Root directory confusion** - Vercel was set to build from `/backend` instead of repo root. Frontend couldn't be found.
+
+2. **ES Module issues** - Node.js needed `"type": "module"` in package.json, plus `.js` extensions on all relative imports. Spent time adding `.js` to every `import { x } from '../_lib/db'` statement.
+
+3. **Auth token formatting** - The Turso auth token got saved with line breaks in Vercel's env vars. Invalid HTTP header. Had to re-enter it as a single line.
+
+### Configuration Files
+
+**vercel.json:**
+```json
+{
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
+}
+```
+
+**Environment variables in Vercel:**
+- `TURSO_DATABASE_URL` - libsql://your-db.turso.io
+- `TURSO_AUTH_TOKEN` - JWT token from Turso CLI
+- `ATXP_CONNECTION_STRING` - For the LLM Gateway
+- `JWT_SECRET` - For signing auth tokens
+- `ADMIN_INIT_KEY` - For the DB init endpoint
+
+### Database Initialization
+
+Created a protected endpoint at `/api/db/init` that runs the schema creation. Hit it once after deploy:
+
+```bash
+curl -X POST https://open-alpha-eta.vercel.app/api/db/init \
+  -H "Authorization: Bearer $ADMIN_INIT_KEY"
+```
+
+Tables created: users, parent_links, progress, sessions.
+
+### Current Status
+
+**Live at: https://open-alpha-eta.vercel.app**
+
+The full flow works:
+- Students sign up, learn with AI tutor, take quizzes, track progress
+- Parents sign up, link to children, view progress, chat with AI coach
+- All data persists in Turso
+- AI powered by ATXP LLM Gateway
+
+Zero monthly infrastructure cost on free tiers.
+
+---
+
 *Built with Claude Code, January 2026*
