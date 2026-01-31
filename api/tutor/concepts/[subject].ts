@@ -11,12 +11,15 @@ interface Progress {
   mastery_score: number;
 }
 
-export async function GET(request: Request, { params }: { params: { subject: string } }) {
+export async function GET(request: Request) {
   try {
     const auth = getAuthFromRequest(request);
     if (!auth) return unauthorized();
 
-    const { subject } = params;
+    // Extract subject from URL path: /api/tutor/concepts/[subject]
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const subject = pathParts[pathParts.length - 1];
 
     const userResult = await executeSql<User>(
       'SELECT grade_level FROM users WHERE id = $1',

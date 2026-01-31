@@ -9,12 +9,16 @@ interface Progress {
   completed_at: string | null;
 }
 
-export async function GET(request: Request, { params }: { params: { childId: string } }) {
+export async function GET(request: Request) {
   try {
     const auth = getAuthFromRequest(request);
     if (!auth || auth.role !== 'parent') return unauthorized();
 
-    const childId = parseInt(params.childId, 10);
+    // Extract childId from URL path: /api/parent/children/[childId]/progress
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const childIdIndex = pathParts.indexOf('children') + 1;
+    const childId = parseInt(pathParts[childIdIndex], 10);
 
     const linkResult = await executeSql<{ id: number }>(
       `SELECT id FROM parent_links
