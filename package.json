@@ -2,6 +2,7 @@
   "name": "open-alpha",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "AI-powered K-12 learning platform",
   "workspaces": [
     "backend",
