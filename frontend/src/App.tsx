@@ -8,6 +8,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import Learn from './pages/Learn';
 import ParentDashboard from './pages/ParentDashboard';
 import ParentCoach from './pages/ParentCoach';
+import Settings from './pages/Settings';
 
 interface User {
   id: number;
@@ -22,6 +23,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
   isLoading: boolean;
 }
 
@@ -72,8 +74,12 @@ function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -110,6 +116,14 @@ function App() {
             element={
               <ProtectedRoute role="student">
                 <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute role="student">
+                <Settings />
               </ProtectedRoute>
             }
           />

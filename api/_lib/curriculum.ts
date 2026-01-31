@@ -99,6 +99,36 @@ export function getNextConcept(
   gradeLevel: number
 ): Concept | undefined {
   const availableConcepts = getConceptsForGrade(subjectId, gradeLevel);
+
+  // If student has no progress, start them at their grade level (not kindergarten)
+  // Find concepts at or just below their grade level that have no prerequisites
+  // or whose prerequisites are below their grade level (assumed competent)
+  if (completedConceptIds.length === 0) {
+    // First, try to find a concept AT their grade level
+    const gradeAppropriate = availableConcepts.find(concept => {
+      if (concept.gradeLevel !== gradeLevel) return false;
+      // Check if all prerequisites are below their grade (assumed mastered)
+      return concept.prerequisites.every(prereqId => {
+        const prereq = availableConcepts.find(c => c.id === prereqId);
+        return prereq && prereq.gradeLevel < gradeLevel;
+      });
+    });
+
+    if (gradeAppropriate) return gradeAppropriate;
+
+    // If no concept at exact grade level, find the highest grade concept they can start
+    const sortedByGrade = [...availableConcepts]
+      .sort((a, b) => b.gradeLevel - a.gradeLevel);
+
+    return sortedByGrade.find(concept => {
+      return concept.prerequisites.every(prereqId => {
+        const prereq = availableConcepts.find(c => c.id === prereqId);
+        return prereq && prereq.gradeLevel < gradeLevel;
+      });
+    });
+  }
+
+  // If they have progress, use normal progression logic
   return availableConcepts.find(concept => {
     if (completedConceptIds.includes(concept.id)) return false;
     return concept.prerequisites.every(prereq => completedConceptIds.includes(prereq));

@@ -139,6 +139,9 @@ export default function StudentDashboard() {
             <span className="desktop-user-info" style={{ color: 'var(--text-light)' }}>
               {user?.displayName || user?.email} · {gradeLabels[user?.gradeLevel || 0]}
             </span>
+            <Link to="/settings" className="btn btn-outline" style={{ padding: '0.5rem 1rem' }}>
+              Settings
+            </Link>
             <button onClick={logout} className="btn btn-outline" style={{ padding: '0.5rem 1rem' }}>
               Sign Out
             </button>
