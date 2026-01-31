@@ -12,12 +12,23 @@
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "build": "npm run build --workspaces",
+    "build:vercel": "cd frontend && npm run build",
     "db:setup": "npm run db:setup --workspace=backend",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces"
   },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^4.77.0"
+  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@vercel/node": "^3.2.0",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0"
